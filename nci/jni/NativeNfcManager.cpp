@@ -40,6 +40,7 @@
 #include "nfa_p2p_api.h"
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
+#include "phNxpConfig.h"
 #include "rw_api.h"
 
 using android::base::StringPrintf;
@@ -745,6 +746,9 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_DM_RF_FIELD_EVT; status=0x%X; field status=%u", __func__,
           eventData->rf_field.status, eventData->rf_field.rf_field_status);
+      /* #if (NFC_AGC_DEBUG_FEATURE == 1) */
+      EXTNS_DebugAgcCfg(eventData->rf_field.rf_field_status);
+          
       if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
         JNIEnv* e = NULL;
@@ -806,9 +810,9 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
         sIsDisabling = false;
       }
       PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
-      LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
       //////////////////////////////////////////////
       // crash the NFC service process so it can restart automatically
+      LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
       abort();
       //////////////////////////////////////////////
     } break;
