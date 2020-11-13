@@ -13,7 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2020 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <errno.h>
@@ -547,6 +565,10 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   sCurrentConnectedTargetType = natTag.mTechList[i];
   sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
 
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: TargetType=%d, TargetProtocol=%d", __func__,
+        sCurrentConnectedTargetType, sCurrentConnectedTargetProtocol);
+
   if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s() Nfc type = %d, do nothing for non ISO_DEP",
@@ -558,10 +580,9 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   if (sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3A ||
       sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3B) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: switching to tech: %d need to switch rf intf to frame", __func__,
+        "%s: switching to tech: %d, no need to switch rf intf to frame", __func__,
         sCurrentConnectedTargetType);
-    retCode = switchRfInterface(NFA_INTERFACE_FRAME) ? NFA_STATUS_OK
-                                                     : NFA_STATUS_FAILED;
+    goto TheEnd; /* Do nothing for this type */
   } else {
     retCode = switchRfInterface(NFA_INTERFACE_ISO_DEP) ? NFA_STATUS_OK
                                                        : NFA_STATUS_FAILED;
@@ -768,7 +789,7 @@ static jint nativeNfcTag_doReconnect(JNIEnv*, jobject) {
 
   // this is only supported for type 2 or 4 (ISO_DEP) tags
   if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_ISO_DEP)
-    retCode = reSelect(NFA_INTERFACE_ISO_DEP, false);
+    retCode = NFCSTATUS_SUCCESS;
   else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T)
     retCode = reSelect(NFA_INTERFACE_FRAME, false);
   else if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
